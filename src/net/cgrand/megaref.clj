@@ -184,7 +184,7 @@
           :validator (set-validator! r (megaref-validator value))
           :max-history (ref-max-history r value)
           :min-history (ref-min-history r value)
-          :guard-prefix (set! guard-prefixes (boolean value))
+          :guard-prefixes (set! guard-prefixes (boolean value))
           (throw (IllegalArgumentException. (str "Unknown option: " option))))
         (set! options (assoc options option value)))))
   (get-options [this] (locking this options))
