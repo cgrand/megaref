@@ -1,6 +1,6 @@
 # megaref
 
-This library introduces two new reference types which participates in STM
+This library introduces two new reference types which participate in STM
 transactions. 
 
 (See http://clj-me.cgrand.net/2011/10/06/a-world-in-a-ref/ for the core
@@ -15,7 +15,7 @@ alter, commute, deref, ref-set and ensure but at the path level rather than at
 the whole ref level. Thus they allow for more concurrency.
 
 For example two alter-in on different paths (eg [:a :b :c] and [:a :b :d]) on
-the same ref won't conflict. However [:a :b] and [:a :b :c] will conflicts;
+the same ref won't conflict. However [:a :b] and [:a :b :c] will conflict;
 this check can be turned off by setting the option :guard-prefixes to false.
 
 The amount of concurrency can be controlled by setting the :guards-count option.
