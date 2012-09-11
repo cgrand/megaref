@@ -1,4 +1,7 @@
-(ns ants.core)
+(ns ants.core
+  (:refer-clojure :exclude [alter commute ref-set ensure])
+  (:use [net.cgrand.megaref
+         :only [alter commute ref-set ensure megaref subref]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Ant sim ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   Copyright (c) Rich Hickey. All rights reserved.
@@ -28,20 +31,17 @@
 (def ant-sleep-ms 40)
 (def evap-sleep-ms 1000)
 
+(def running false)
 (def running true)
 
 (defstruct cell :food :pher) ;may also have :ant and :home
 
-;world is a 2d vector of refs to cells
-(def world 
-     (apply vector 
-            (map (fn [_] 
-                   (apply vector (map (fn [_] (ref (struct cell 0 0))) 
-                                      (range dim)))) 
-                 (range dim))))
+;world is a megaref to a 2d vector of cells
+(def world
+  (megaref (vec (repeat dim (vec (repeat dim (struct cell 0 0)))))))
 
-(defn place [[x y]]
-  (-> world (nth x) (nth y)))
+(defn place [xy]
+  (subref world xy))
 
 (defstruct ant :dir) ;may also have :food
 
