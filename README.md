@@ -58,6 +58,9 @@ The idea is to aggregate several refs in one megaref and to replace those
 refs by subrefs on the newly minted megaref (and to replace all calls to 
 alter/commute/... by their homonymous replacements).
 
+See https://github.com/cgrand/megaref/commit/c9d8f3932d8da92172f2b8c1901f2cdaa716f784
+for the conversion of the original STM ants demo by Rich Hickey to megarefs.
+
 ## License
 
 Copyright © 2012 Christophe Grand
