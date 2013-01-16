@@ -213,11 +213,10 @@
 (defn evaporate 
   "causes all the pheromones to evaporate a bit"
   []
-  (dorun 
-   (for [x (range dim) y (range dim)]
-     (dosync 
+  (doseq [x (range dim) y (range dim)]
+    (dosync 
       (let [p (place [x y])]
-        (alter p assoc :pher (* evap-rate (:pher @p))))))))
+        (alter p assoc :pher (* evap-rate (:pher @p)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; UI ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (import 
