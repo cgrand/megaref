@@ -263,8 +263,7 @@
     (render-ant (:ant p) g x y)))
 
 (defn render [g]
-  (let [v (dosync (apply vector (for [x (range dim) y (range dim)] 
-                                   @(place [x y]))))
+  (let [w @world
         img (new BufferedImage (* scale dim) (* scale dim) 
                  (. BufferedImage TYPE_INT_ARGB))
         bg (. img (getGraphics))]
@@ -273,7 +272,7 @@
       (.fillRect 0 0 (. img (getWidth)) (. img (getHeight))))
     (dorun 
      (for [x (range dim) y (range dim)]
-       (render-place bg (v (+ (* x dim) y)) x y)))
+       (render-place bg (get-in w [x y]) x y)))
     (doto bg
       (.setColor (. Color blue))
       (.drawRect (* scale home-off) (* scale home-off) 
