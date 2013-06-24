@@ -1,4 +1,4 @@
-(defproject megaref "0.1.0-SNAPSHOT"
+(defproject megaref "0.2.0"
   :description "STM ref types that allow for more concurrency on associative values."
   :url "http://github.com/cgrand/megaref"
   :license {:name "Eclipse Public License"

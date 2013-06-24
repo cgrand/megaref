@@ -16,7 +16,7 @@ the whole ref level. Thus they allow for more concurrency.
 
 For example two alter-in on different paths (eg [:a :b :c] and [:a :b :d]) on
 the same ref won't conflict. However [:a :b] and [:a :b :c] will conflict;
-this check can be turned off by setting the option :guard-prefixes to false.
+this check can be turned off by setting the option :guard-prefixes to false. Obviously, you should only turn it off when you never update paths that are prefixes of each other.
 
 The amount of concurrency can be controlled by setting the :guards-count option.
 
@@ -64,6 +64,6 @@ for the conversion of the original STM ants demo by Rich Hickey to megarefs.
 
 ## License
 
-Copyright © 2012 Christophe Grand
+Copyright © 2012-2013 Christophe Grand
 
 Distributed under the Eclipse Public License, the same as Clojure.
