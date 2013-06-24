@@ -13,11 +13,11 @@
 ;   You must not remove this notice, or any other, from this software.
 
 ;dimensions of square world
-(def dim 80)
+(def dim 300)
 ;number of ants = nants-sqrt^2
-(def nants-sqrt 7)
+(def nants-sqrt 30)
 ;number of places with food
-(def food-places 35)
+(def food-places 200)
 ;range of amount of food at a place
 (def food-range 100)
 ;scale factor for pheromone drawing
@@ -34,11 +34,17 @@
 (def running false)
 (def running true)
 
+(def turns (atom 0))
+(def ts (atom [0 0]))
+
 (defstruct cell :food :pher) ;may also have :ant and :home
 
 ;world is a megaref to a 2d vector of cells
 (def world
-  (megaref (vec (repeat dim (vec (repeat dim (struct cell 0 0)))))))
+  (megaref
+    (vec (repeat dim (vec (repeat dim (struct cell 0 0)))))
+    :min-history 0 :max-history 100
+    :guards 1000 :guard-prefixes false))
 
 (defn place [xy]
   (subref world xy))
@@ -55,7 +61,7 @@
         (agent loc))))
 
 (def home-off (/ dim 4))
-(def home-range (range home-off (+ nants-sqrt home-off)))
+(def home-range (range home-off (+ nants-sqrt home-off) 3))
 
 (defn setup 
   "places initial food and ants, returns seq of ant agents"
@@ -177,6 +183,7 @@
         ahead-right (place (delta-loc loc (inc (:dir ant))))
         places [ahead ahead-left ahead-right]]
     (. Thread (sleep ant-sleep-ms))
+    (swap! turns inc)
     (dosync
      (when running
        (send-off *agent* #'behave))
@@ -225,7 +232,7 @@
  '(javax.swing JPanel JFrame))
 
 ;pixels per world cell
-(def scale 5)
+(def scale 1)
 
 (defn fill-cell [#^Graphics g x y c]
   (doto g
@@ -276,7 +283,12 @@
     (doto bg
       (.setColor (. Color blue))
       (.drawRect (* scale home-off) (* scale home-off) 
-                 (* scale nants-sqrt) (* scale nants-sqrt)))
+                 (* scale nants-sqrt) (* scale nants-sqrt))
+      (.drawString (let [n @turns
+                         [t pt] (swap! ts (fn [[t]] [(System/nanoTime) t]))]
+                     (swap! turns - n)
+                     (str (long (/ n (- t pt) 1e-9))
+                          " / " (long (/ 1e9 (- t pt))))) 30 30))
     (. g (drawImage img 0 0 nil))
     (. bg (dispose))))
 
