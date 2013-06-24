@@ -203,6 +203,11 @@
   (removeWatch [this key]
     (.removeWatch ^clojure.lang.IRef r key)))
 
+(defn- select-or [m defaults-m]
+  (into defaults-m
+    (for [[k dv] defaults-m]
+      [k (get m k dv)])))
+
 (defn megaref
   "Creates and returns an associative ref with an initial value of x and zero or
   more options (in any order):
@@ -216,15 +221,14 @@
 
   Options can be queryed by #'get-options and changed with #'set-option!"
   [x & {:as options}]
-  (let [options (merge {:validator nil, :guards-count 32,
-                        :min-history 0, :max-history 10,
-                        :guard-prefixes true}
-                  (select-keys options [:validator :min-history :max-history]))
-        root-options (update-in options [:validator] megaref-validator)]
-    (SingleRootRef. (apply ref x (mapcat seq root-options))
-                    (ref (guards-fn (:guards-count options)))
-                    options
-                    (boolean (:guard-prefixes options)))))
+  (let [options (select-or options
+                  {:validator nil, :guards-count 32,
+                   :min-history 0, :max-history 10,
+                   :guard-prefixes true})
+        r (SingleRootRef. (ref x) (ref (guards-fn 1)) options true)]
+    (doseq [[option value] options]
+      (set-option! r option value))
+    r))
 
 (deftype SubRef [pref pks]
   AssociativeRef
