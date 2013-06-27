@@ -2,7 +2,7 @@
   "STM ref types specialized for associative data.
    Those megarefs allow for more concurrency than a single ref while still
    being cheap to snapshot (compared to a lot of hot refs)."
-  (:refer-clojure :exclude [commute alter ref-set ensure])
+  (:refer-clojure :exclude [commute alter ref-set ensure ref])
   (:require [clojure.core :as core]))
 
 ;; except ensure-in, ref-set-in and alter-in, the others are here because
@@ -56,7 +56,8 @@
         (throw (IllegalArgumentException. (str "Unknown option: " option))))))
   (get-options [this] {:validator (get-validator this)
                        :max-history (ref-max-history this)
-                       :min-history (ref-min-history this)}))
+                       :min-history (ref-min-history this)
+                       :history (ref-history-count this)}))
 
 (defn alter-in 
   "Must be called in a transaction. Sets the in-transaction-value of aref to:
@@ -131,7 +132,7 @@
       (recur (pop path)))))
 
 (defn- guards-fn [n]
-  (let [guards (vec (repeatedly n #(ref nil)))]
+  (let [guards (vec (repeatedly n #(core/ref nil)))]
     (fn 
       ([] guards)
       ([x] (nth guards (mod (hash x) n))))))
@@ -187,7 +188,8 @@
           :guard-prefixes (set! guard-prefixes (boolean value))
           (throw (IllegalArgumentException. (str "Unknown option: " option))))
         (set! options (assoc options option value)))))
-  (get-options [this] (locking this options))
+  (get-options [this] (assoc (locking this options)
+                        :history (ref-history-count r)))
   clojure.lang.IDeref
   (deref [this]
     @r)
@@ -208,7 +210,7 @@
     (for [[k dv] defaults-m]
       [k (get m k dv)])))
 
-(defn megaref
+(defn ref
   "Creates and returns an associative ref with an initial value of x and zero or
   more options (in any order):
 
@@ -225,7 +227,7 @@
                   {:validator nil, :guards-count 32,
                    :min-history 0, :max-history 10,
                    :guard-prefixes true})
-        r (SingleRootRef. (ref x) (ref (guards-fn 1)) options true)]
+        r (SingleRootRef. (core/ref x) (core/ref (guards-fn 1)) options true)]
     (doseq [[option value] options]
       (set-option! r option value))
     r))

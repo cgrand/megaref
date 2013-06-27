@@ -1,7 +1,8 @@
 (ns ants.core
-  (:refer-clojure :exclude [alter commute ref-set ensure])
+  (:refer-clojure :exclude [alter commute ref-set ensure ref])
   (:use [net.cgrand.megaref
-         :only [alter commute ref-set ensure megaref subref]]))
+         :only [alter commute ref-set ensure ref subref
+                set-option! get-options]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Ant sim ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   Copyright (c) Rich Hickey. All rights reserved.
@@ -41,10 +42,10 @@
 
 ;world is a megaref to a 2d vector of cells
 (def world
-  (megaref
+  (ref
     (vec (repeat dim (vec (repeat dim (struct cell 0 0)))))
-    :min-history 0 :max-history 100
-    :guards 1000 :guard-prefixes false))
+    :guards-count 128 :guard-prefixes false
+    :min-history 20 :max-history 50))
 
 (defn place [xy]
   (subref world xy))
