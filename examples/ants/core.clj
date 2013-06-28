@@ -44,7 +44,7 @@
 (def world
   (ref
     (vec (repeat dim (vec (repeat dim (struct cell 0 0)))))
-    :guards-count 128 :guard-prefixes false
+    :guards-count (* 32 8) :guard-prefixes :optimistic
     :min-history 20 :max-history 50))
 
 (defn place [xy]
