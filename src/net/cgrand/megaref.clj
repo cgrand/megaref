@@ -123,25 +123,31 @@
   [r]
   (ensure-in r nil))
 
-(defn- check-path 
-  "Calls check on the guard of each prefix of path, returns
-   the hashcode for the whole path."
-  [check guard-ref-for path]
-  (or (reduce (fn [h p]
-                (if h
-                  (do
-                    (check (guard-ref-for h))
+(defn- prefix-checker 
+  "Returns a function that calls check on the guard of each prefix of path, returns
+   the guard for the whole path."
+  [check guard-ref-for]
+  (if check
+    (fn [path]
+      ((ensure guard-ref-for) (hash path)))
+    (fn [path]
+      (let [guard (ensure guard-ref-for)]
+        (if (seq path)
+          (reduce (fn [h p]
+                    (check (guard h))
                     (unchecked-add-int
                       (unchecked-multiply-int 31 h)
                       (hash p)))
-                  (unchecked-add-int 31 (hash p))))
-        nil path) 1))
+            1 path)
+          (guard 1))))))
 
 (defn- guards-fn [n]
-  (let [guards (vec (repeatedly n #(core/ref nil)))]
+  (let [guards (to-array (repeatedly n #(core/ref nil
+                                          :min-history 0
+                                          :max-history 0)))]
     (fn 
-      ([] guards)
-      ([h] (nth guards (mod h n))))))
+      ([] (seq guards))
+      ([h] (aget guards (mod h n))))))
 
 (defn- invalidate [guard]
   (ref-set guard nil))
@@ -152,15 +158,12 @@
     #(or (associative? %) (nil? %))))
 
 (deftype SingleRootRef [r guard ^:unsynchronized-mutable options
-                        ^:volatile-mutable check-prefixes]
+                        ^:volatile-mutable check-prefix]
   AssociativeRef
   (-alter-in [this ks f args]
     (if (seq ks)
-      (let [guard (ensure guard)]
-        (invalidate (guard (if check-prefixes 
-                             ; invalidate used to ensure there but ensure is too blocking
-                             (check-path check-prefixes guard ks)
-                             (hash ks))))
+      (do
+        (invalidate (check-prefix ks))
         (let [v (apply f (get-in @r ks) args)]
           ; v is precomputed to not evaluate it twice because of commute
           (commute r assoc-in ks v)
@@ -176,10 +179,7 @@
     (-alter-in this ks (constantly v) nil))
   (ensure-in [this ks]
     (if (seq ks)
-      (let [guard (ensure guard)]
-        (if check-prefixes
-          (ensure (guard (check-path ensure guard ks)))
-          (ensure (guard (hash ks)))))
+      (ensure (check-prefix ks))
       (ensure r))
     (deref-in this ks))
   (deref-in [this ks]
@@ -193,11 +193,13 @@
           :validator (set-validator! r (megaref-validator value))
           :max-history (ref-max-history r value)
           :min-history (ref-min-history r value)
-          :check-prefixes (set! check-prefixes 
-                            (case value
-                              :optimistic invalidate
-                              :pessimistic ensure
-                              (false nil) nil))
+          :check-prefixes (set! check-prefix 
+                            (prefix-checker 
+                              (case value
+                                :optimistic invalidate
+                                :pessimistic ensure
+                                (false nil) nil)
+                              guard))
           (throw (IllegalArgumentException. (str "Unknown option: " option))))
         (set! options (assoc options option value)))))
   (get-options [this] (assoc (locking this options)
